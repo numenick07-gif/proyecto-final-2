@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -235,7 +237,7 @@ with tab1:
             """, unsafe_allow_html=True)
             
         st.write("")
-        st.progress(prob_entrega)
+        st.progress(float(np.clip(prob_entrega, 0.0, 1.0)))
         
     with col2:
         st.markdown("### Explicación del Modelo e Impacto de Coeficientes")
@@ -377,14 +379,18 @@ with tab4:
     st.markdown("### 💾 Dataset del Proyecto (24 Estudiantes)")
     st.write("Este es el conjunto de datos completo utilizado para el entrenamiento y prueba de los modelos predictivos:")
     
-    # Mostrar el dataframe completo formateado de forma atractiva
-    st.dataframe(
-        df.style.map(
-            lambda val: 'background-color: #d4fc79; color: #1e4620;' if val == 1 else 'background-color: #ff9a9e; color: #5c181b;', 
-            subset=['Recordatorio_Enviado', 'Entrego']
-        ), 
-        width='stretch'
-    )
+    # Mostrar el dataframe completo formateado de forma atractiva con compatibilidad de versión
+    styler = df.style
+    style_func = lambda val: 'background-color: #d4fc79; color: #1e4620;' if val == 1 else 'background-color: #ff9a9e; color: #5c181b;'
+    if hasattr(styler, 'map'):
+        styled_df = styler.map(style_func, subset=['Recordatorio_Enviado', 'Entrego'])
+    else:
+        styled_df = styler.applymap(style_func, subset=['Recordatorio_Enviado', 'Entrego'])
+        
+    try:
+        st.dataframe(styled_df, width='stretch')
+    except Exception:
+        st.dataframe(styled_df, use_container_width=True)
     
     st.write("---")
     st.write("#### 📊 Distribución de Estadísticas Descriptivas del Grupo")
